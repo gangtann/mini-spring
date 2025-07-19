@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手写Spring MVC流程图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: linear-gradient(135deg, #ff7b7b 0%, #667eea 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ffa726);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .mvc-flow {
+            padding: 40px;
+        }
+
+        .flow-section {
+            margin-bottom: 40px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            border-left: 5px solid #ff6b6b;
+        }
+
+        .flow-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+        }
+
+        .flow-section .icon {
+            width: 40px;
+            height: 40px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-right: 15px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .flow-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .flow-step {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            position: relative;
+            border-top: 4px solid #ff6b6b;
+        }
+
+        .flow-step h4 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .flow-step ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .flow-step li {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .flow-step li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .sequence-diagram {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .sequence-title {
+            text-align: center;
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .sequence-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .sequence-role {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .role-box {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 25px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .sequence-arrows {
+            position: absolute;
+            top: 80px;
+            left: 0;
+            right: 0;
+            height: 400px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .arrow-line {
+            position: absolute;
+            height: 2px;
+            background: #ff6b6b;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .arrow-text {
+            position: absolute;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            border: 2px solid #ff6b6b;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 2;
+        }
+
+        .code-example {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+
+        .code-example code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        .components-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .component-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #28a745;
+        }
+
+        .component-card h4 {
+            color: #155724;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .annotation-list {
+            background: #e3f2fd;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .annotation-list h4 {
+            color: #0d47a1;
+            margin-bottom: 15px;
+        }
+
+        .annotation-item {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .workflow-diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+
+        .workflow-step {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 25px;
+            text-align: center;
+            min-width: 250px;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .workflow-step::after {
+            content: '↓';
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+            color: #667eea;
+        }
+
+        .workflow-step:last-child::after {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .flow-steps {
+                grid-template-columns: 1fr;
+            }
+            
+            .sequence-flow {
+                flex-direction: column;
+            }
+            
+            .components-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>手写Spring MVC流程图</h1>
+            <p>基于DispatcherServlet实现的简化版MVC框架工作流程</p>
+        </div>
+
+        <div class="mvc-flow">
+            <div class="flow-section">
+                <h2>
+                    <div class="icon">1</div>
+                    请求入口阶段
+                </h2>
+                <div class="flow-steps">
+                    <div class="flow-step">
+                        <h4>客户端发送HTTP请求</h4>
+                        <ul>
+                            <li>浏览器/Postman/其他客户端</li>
+                            <li>支持GET、POST等HTTP方法</li>
+                            <li>携带请求参数和Headers</li>
+                        </ul>
+                        <div class="code-example">
+                            <code>GET /hello?name=张三 HTTP/1.1</code>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <h4>Tomcat接收请求</h4>
+                        <ul>
+                            <li>嵌入式Tomcat服务器监听端口</li>
+                            <li>解析HTTP请求报文</li>
+                            <li>创建HttpServletRequest和Response</li>
+                        </ul>
+                    </div>
+                    <div class="flow-step">
+                        <h4>DispatcherServlet拦截</h4>
+                        <ul>
+                            <li>继承HttpServlet的中央调度器</li>
+                            <li>处理所有请求路径</li>
+                            <li>初始化时扫描控制器</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sequence-diagram">
+                <div class="sequence-title">MVC请求处理时序图</div>
+                <div class="sequence-flow">
+                    <div class="sequence-role">
+                        <div class="role-box">客户端</div>
+                        <div style="height: 300px; border-right: 2px solid #ccc; margin: 0 auto; width: 2px;"></div>
+                    </div>
+                    <div class="sequence-role">
+                        <div class="role-box">Tomcat服务器</div>
+                        <div style="height: 300px; border-right: 2px solid #ccc; margin: 0 auto; width: 2px;"></div>
+                    </div>
+                    <div class="sequence-role">
+                        <div class="role-box">DispatcherServlet</div>
+                        <div style="height: 300px; border-right: 2px solid #ccc; margin: 0 auto; width: 2px;"></div>
+                    </div>
+                    <div class="sequence-role">
+                        <div class="role-box">Controller</div>
+                        <div style="height: 300px; border-right: 2px solid #ccc; margin: 0 auto; width: 2px;"></div>
+                    </div>
+                    <div class="sequence-role">
+                        <div class="role-box">视图引擎</div>
+                        <div style="height: 300px; margin: 0 auto; width: 2px;"></div>
+                    </div>
+                </div>
+                
+                <div class="workflow-diagram">
+                    <div class="workflow-step">
+                        1. 发送HTTP请求<br>
+                        <small>GET /hello?name=张三</small>
+                    </div>
+                    <div class="workflow-step">
+                        2. Tomcat解析请求<br>
+                        <small>创建HttpServletRequest</small>
+                    </div>
+                    <div class="workflow-step">
+                        3. DispatcherServlet处理<br>
+                        <small>查找匹配的处理器</small>
+                    </div>
+                    <div class="workflow-step">
+                        4. 调用Controller方法<br>
+                        <small>执行业务逻辑</small>
+                    </div>
+                    <div class="workflow-step">
+                        5. 返回ModelAndView<br>
+                        <small>数据和视图名</small>
+                    </div>
+                    <div class="workflow-step">
+                        6. 视图渲染<br>
+                        <small>生成HTML响应</small>
+                    </div>
+                    <div class="workflow-step">
+                        7. 返回客户端<br>
+                        <small>HTTP响应</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-section">
+                <h2>
+                    <div class="icon">2</div>
+                    请求映射阶段
+                </h2>
+                <div class="flow-steps">
+                    <div class="flow-step">
+                        <h4>扫描控制器</h4>
+                        <ul>
+                            <li>查找所有@Controller注解的类</li>
+                            <li>收集@RequestMapping路径映射</li>
+                            <li>构建URL到方法的映射表</li>
+                        </ul>
+                        <div class="code-example">
+                            <code>@Controller<br>@RequestMapping("/hello")</code>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <h4>路径匹配</h4>
+                        <ul>
+                            <li>将请求URL与映射规则匹配</li>
+                            <li>支持路径变量和通配符</li>
+                            <li>精确匹配优先原则</li>
+                        </ul>
+                    </div>
+                    <div class="flow-step">
+                        <h4>参数绑定</h4>
+                        <ul>
+                            <li>@RequestParam绑定查询参数</li>
+                            <li>类型转换和验证</li>
+                            <li>必填参数检查</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-section">
+                <h2>
+                    <div class="icon">3</div>
+                    业务处理阶段
+                </h2>
+                <div class="flow-steps">
+                    <div class="flow-step">
+                        <h4>调用Controller方法</h4>
+                        <ul>
+                            <li>通过反射调用目标方法</li>
+                            <li>注入Service等依赖</li>
+                            <li>执行业务逻辑</li>
+                        </ul>
+                        <div class="code-example">
+                            <code>@GetMapping("/hello")<br>public ModelAndView hello(@RequestParam String name)</code>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <h4>数据准备</h4>
+                        <ul>
+                            <li>调用Service层处理业务</li>
+                            <li>查询数据库或其他数据源</li>
+                            <li>准备视图所需的数据模型</li>
+                        </ul>
+                    </div>
+                    <div class="flow-step">
+                        <h4>返回处理结果</h4>
+                        <ul>
+                            <li>返回ModelAndView对象</li>
+                            <li>或者直接返回JSON数据</li>
+                            <li>@ResponseBody注解处理</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-section">
+                <h2>
+                    <div class="icon">4</div>
+                    视图解析阶段
+                </h2>
+                <div class="flow-steps">
+                    <div class="flow-step">
+                        <h4>视图解析</h4>
+                        <ul>
+                            <li>根据视图名查找对应的HTML模板</li>
+                            <li>支持简单的占位符替换</li>
+                            <li>gtan{variable}语法</li>
+                        </ul>
+                        <div class="code-example">
+                            <code>return new ModelAndView("index", "user", user)</code>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <h4>模板渲染</h4>
+                        <ul>
+                            <li>替换模板中的变量</li>
+                            <li>生成最终的HTML内容</li>
+                            <li>处理循环和条件语句</li>
+                        </ul>
+                    </div>
+                    <div class="flow-step">
+                        <h4>响应返回</h4>
+                        <ul>
+                            <li>设置Content-Type为text/html</li>
+                            <li>写入响应体</li>
+                            <li>返回给客户端</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="components-grid">
+                <div class="component-card">
+                    <h4>核心组件</h4>
+                    <ul>
+                        <li><strong>DispatcherServlet</strong> - 中央调度器</li>
+                        <li><strong>TomcatServer</strong> - 嵌入式服务器</li>
+                        <li><strong>WebHandler</strong> - 请求处理器包装</li>
+                        <li><strong>ModelAndView</strong> - 模型视图桥接</li>
+                    </ul>
+                </div>
+
+                <div class="component-card">
+                    <h4>注解系统</h4>
+                    <ul>
+                        <li><strong>@Controller</strong> - 标识控制器类</li>
+                        <li><strong>@RequestMapping</strong> - 映射请求路径</li>
+                        <li><strong>@RequestParam</strong> - 绑定请求参数</li>
+                        <li><strong>@ResponseBody</strong> - 直接返回JSON</li>
+                    </ul>
+                </div>
+
+                <div class="component-card">
+                    <h4>响应模式</h4>
+                    <ul>
+                        <li><strong>视图渲染</strong> - 返回HTML页面</li>
+                        <li><strong>JSON响应</strong> - @ResponseBody</li>
+                        <li><strong>文本响应</strong> - 直接返回字符串</li>
+                        <li><strong>重定向</strong> - redirect:前缀</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="annotation-list">
+                <h4>关键注解详细说明</h4>
+                
+                <div class="annotation-item">
+                    <strong>@Controller</strong><br>
+                    标记在类上，表示这是一个Spring MVC控制器。DispatcherServlet会自动扫描并注册带有此注解的类。
+                </div>
+                
+                <div class="annotation-item">
+                    <strong>@RequestMapping</strong><br>
+                    用于映射HTTP请求到处理方法。支持类级别和方法级别的映射，可以指定HTTP方法类型。
+                </div>
+                
+                <div class="annotation-item">
+                    <strong>@RequestParam</strong><br>
+                    绑定请求参数到方法参数。支持默认值设置，必填参数标记，以及类型转换。
+                </div>
+                
+                <div class="annotation-item">
+                    <strong>@ResponseBody</strong><br>
+                    表示方法返回值应直接写入HTTP响应体，常用于返回JSON数据。
+                </div>
+            </div>
+
+            <div class="code-example" style="margin: 30px;">
+                <h4 style="color: white; margin-bottom: 15px;">完整使用示例</h4>
+                <code>
+// 1. 启动服务器<br>
+TomcatServer server = new TomcatServer();<br>
+server.startServer(8080, "/", "com.gtan.spring");<br><br>
+
+// 2. 控制器示例<br>
+@Controller<br>
+@RequestMapping("/hello")<br>
+public class HelloController {<br>
+    &nbsp;&nbsp;@GetMapping("/greet")<br>
+    &nbsp;&nbsp;public ModelAndView hello(@RequestParam String name) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;User user = new User(name, 25);<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;return new ModelAndView("greeting", "user", user);<br>
+    &nbsp;&nbsp;}<br><br>
+    &nbsp;&nbsp;@GetMapping("/json")<br>
+    &nbsp;&nbsp;@ResponseBody<br>
+    &nbsp;&nbsp;public User getUser(@RequestParam String name) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;return new User(name, 25);<br>
+    &nbsp;&nbsp;}<br>
+}<br><br>
+
+// 3. 访问URL<br>
+// http://localhost:8080/hello/greet?name=张三<br>
+// http://localhost:8080/hello/json?name=张三
+                </code>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

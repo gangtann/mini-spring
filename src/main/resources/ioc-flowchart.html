@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手写Spring IOC容器流程图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.8;
+        }
+
+        .flowchart {
+            padding: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .phase {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 5px solid #3498db;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .phase:hover {
+            transform: translateY(-5px);
+        }
+
+        .phase h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+        }
+
+        .phase-icon {
+            width: 30px;
+            height: 30px;
+            background: #3498db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .steps {
+            list-style: none;
+        }
+
+        .steps li {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .steps li::before {
+            content: '▶';
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #3498db;
+            font-size: 12px;
+        }
+
+        .data-structures {
+            margin-top: 30px;
+            padding: 25px;
+            background: #fff3cd;
+            border-radius: 15px;
+            border-left: 5px solid #ffc107;
+        }
+
+        .data-structures h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .data-map {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .data-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .data-item strong {
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .lifecycle {
+            margin-top: 30px;
+            padding: 25px;
+            background: #d4edda;
+            border-radius: 15px;
+            border-left: 5px solid #28a745;
+        }
+
+        .lifecycle h3 {
+            color: #155724;
+            margin-bottom: 15px;
+        }
+
+        .lifecycle-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .lifecycle-step {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .lifecycle-step:not(:last-child)::after {
+            content: '→';
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: #28a745;
+        }
+
+        .code-example {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+
+        .code-example code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        .legend {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e7f3ff;
+            border-radius: 15px;
+            border-left: 5px solid #007bff;
+        }
+
+        .legend h4 {
+            color: #004085;
+            margin-bottom: 10px;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .flowchart {
+                grid-template-columns: 1fr;
+            }
+            
+            .lifecycle-flow {
+                flex-direction: column;
+            }
+            
+            .lifecycle-step:not(:last-child)::after {
+                content: '↓';
+                right: 50%;
+                bottom: -15px;
+                top: auto;
+                transform: translateX(50%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>手写Spring IOC容器流程图</h1>
+            <p>基于ApplicationContext实现的简化版IoC容器工作流程</p>
+        </div>
+
+        <div class="flowchart">
+            <div class="phase">
+                <h3>
+                    <div class="phase-icon">1</div>
+                    扫描阶段
+                </h3>
+                <ul class="steps">
+                    <li>递归扫描指定包路径下的所有.class文件</li>
+                    <li>使用Files.walkFileTree遍历文件系统</li>
+                    <li>将文件路径转换为类全限定名</li>
+                    <li>使用Class.forName()加载Class对象</li>
+                </ul>
+                <div class="code-example">
+                    <code>scanPackage("com.gtan.spring")</code>
+                </div>
+            </div>
+
+            <div class="phase">
+                <h3>
+                    <div class="phase-icon">2</div>
+                    过滤阶段
+                </h3>
+                <ul class="steps">
+                    <li>检查每个类是否带有@Component注解</li>
+                    <li>过滤出需要由容器管理的Bean</li>
+                    <li>忽略没有@Component注解的类</li>
+                </ul>
+                <div class="code-example">
+                    <code>type.isAnnotationPresent(Component.class)</code>
+                </div>
+            </div>
+
+            <div class="phase">
+                <h3>
+                    <div class="phase-icon">3</div>
+                    注册阶段
+                </h3>
+                <ul class="steps">
+                    <li>为每个符合条件的类创建BeanDefinition</li>
+                    <li>提取@Component注解的name属性作为Bean名称</li>
+                    <li>收集@Autowired字段和@PostConstruct方法</li>
+                    <li>注册到beanDefinitionMap中</li>
+                </ul>
+                <div class="code-example">
+                    <code>beanDefinitionMap.put(name, new BeanDefinition(type))</code>
+                </div>
+            </div>
+
+            <div class="phase">
+                <h3>
+                    <div class="phase-icon">4</div>
+                    实例化阶段
+                </h3>
+                <ul class="steps">
+                    <li>调用无参构造函数创建Bean实例</li>
+                    <li>处理循环依赖（使用loadingIoc缓存）</li>
+                    <li>检测重复Bean名称</li>
+                    <li>实例化所有BeanPostProcessor</li>
+                </ul>
+                <div class="code-example">
+                    <code>constructor.newInstance()</code>
+                </div>
+            </div>
+
+            <div class="phase">
+                <h3>
+                    <div class="phase-icon">5</div>
+                    注入阶段
+                </h3>
+                <ul class="steps">
+                    <li>遍历所有@Autowired标注的字段</li>
+                    <li>按类型查找对应的Bean实例</li>
+                    <li>使用反射设置字段值（setAccessible(true)）</li>
+                    <li>支持递归依赖注入</li>
+                </ul>
+                <div class="code-example">
+                    <code>field.set(bean, getBean(field.getType()))</code>
+                </div>
+            </div>
+
+            <div class="phase">
+                <h3>
+                    <div class="phase-icon">6</div>
+                    初始化阶段
+                </h3>
+                <ul class="steps">
+                    <li>调用BeanPostProcessor的beforeInitialize方法</li>
+                    <li>执行@PostConstruct标注的初始化方法</li>
+                    <li>调用BeanPostProcessor的afterInitialize方法</li>
+                    <li>将完成初始化的Bean注册到IoC容器</li>
+                </ul>
+                <div class="code-example">
+                    <code>@PostConstruct → postConstructMethod.invoke(bean)</code>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-structures">
+            <h3>核心数据结构</h3>
+            <div class="data-map">
+                <div class="data-item">
+                    <strong>beanDefinitionMap</strong>
+                    存储Bean的元数据定义，key为Bean名称，value为BeanDefinition对象
+                </div>
+                <div class="data-item">
+                    <strong>ioc</strong>
+                    存储已实例化的单例Bean，实现缓存机制，避免重复创建
+                </div>
+                <div class="data-item">
+                    <strong>loadingIoc</strong>
+                    临时存储正在创建中的Bean，用于解决循环依赖问题
+                </div>
+                <div class="data-item">
+                    <strong>beanPostProcessors</strong>
+                    存储所有BeanPostProcessor实例，用于Bean初始化前后的增强处理
+                </div>
+            </div>
+        </div>
+
+        <div class="lifecycle">
+            <h3>Bean生命周期流程</h3>
+            <div class="lifecycle-flow">
+                <div class="lifecycle-step">实例化<br><small>newInstance()</small></div>
+                <div class="lifecycle-step">属性注入<br><small>@Autowired</small></div>
+                <div class="lifecycle-step">前置处理<br><small>BeanPostProcessor</small></div>
+                <div class="lifecycle-step">初始化<br><small>@PostConstruct</small></div>
+                <div class="lifecycle-step">后置处理<br><small>BeanPostProcessor</small></div>
+                <div class="lifecycle-step">就绪<br><small>可用Bean</small></div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h4>关键注解说明</h4>
+            <div class="legend-grid">
+                <div>@Component - 标识一个类为Spring管理的Bean</div>
+                <div>@Autowired - 自动注入依赖的Bean</div>
+                <div>@PostConstruct - 在依赖注入完成后执行初始化</div>
+                <div>BeanPostProcessor - 在Bean初始化前后进行增强处理</div>
+            </div>
+        </div>
+
+        <div class="code-example" style="margin: 30px;">
+            <h4 style="color: white; margin-bottom: 15px;">使用示例</h4>
+            <code>
+// 1. 创建容器<br>
+ApplicationContext context = new ApplicationContext("com.gtan.spring");<br><br>
+
+// 2. 获取Bean<br>
+MyService service = context.getBean(MyService.class);<br><br>
+
+// 3. 使用Bean<br>
+service.doSomething();
+            </code>
+        </div>
+    </div>
+</body>
+</html>

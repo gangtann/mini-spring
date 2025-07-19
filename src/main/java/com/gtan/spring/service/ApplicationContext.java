@@ -1,6 +1,7 @@
 package com.gtan.spring.service;
 
 import com.gtan.spring.annotation.Component;
+import com.gtan.spring.annotation.Autowired;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,19 +22,52 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 手写简化版 Spring IoC 容器 ApplicationContext：
- * 负责扫描指定包下的组件，生成 BeanDefinition，
- * 管理 Bean 的实例化、属性注入及生命周期回调。
- * <p>
- * 核心流程：
- * 1. 扫描 packageName 下所有带 @Component 注解的类 (scanPackage、scanCreate)
- * 2. 将扫描到的类包装为 BeanDefinition 并缓存 (wrapper)
- * 3. 初始化所有 BeanPostProcessor 实例 (initBeanPostProcessor)
- * 4. 依赖注入并实例化所有 Bean (createBean、doCreateBean)
- *
+ * ApplicationContext - 手写简化版 Spring IoC 容器核心实现
+ * 
+ * <p>底层原理说明：</p>
+ * <p>这是整个 Spring IoC 容器的核心实现，模拟了 Spring 框架的以下关键机制：</p>
+ * 
+ * <ul>
+ *   <li><strong>组件扫描机制</strong>：通过扫描指定包路径，自动发现带有 @Component 注解的类</li>
+ *   <li><strong>Bean 定义注册</strong>：将扫描到的类封装为 BeanDefinition，包含类的元数据信息</li>
+ *   <li><strong>依赖注入</strong>：通过 @Autowired 注解实现自动装配，支持按类型注入</li>
+ *   <li><strong>生命周期管理</strong>：支持 @PostConstruct 注解的初始化方法回调</li>
+ *   <li><strong>Bean 后置处理器</strong>：实现 BeanPostProcessor 接口，支持 Bean 初始化前后的增强处理</li>
+ *   <li><strong>单例模式</strong>：默认采用单例模式管理 Bean 实例，确保线程安全</li>
+ * </ul>
+ * 
+ * <p>核心工作流程：</p>
+ * <ol>
+ *   <li><strong>扫描阶段</strong>：递归扫描指定包下的所有 .class 文件</li>
+ *   <li><strong>过滤阶段</strong>：识别带有 @Component 注解的类，过滤出需要管理的 Bean</li>
+ *   <li><strong>注册阶段</strong>：为每个符合条件的类创建 BeanDefinition 并注册</li>
+ *   <li><strong>实例化阶段</strong>：根据 BeanDefinition 创建 Bean 实例</li>
+ *   <li><strong>注入阶段</strong>：处理 @Autowired 注解，完成依赖注入</li>
+ *   <li><strong>初始化阶段</strong>：调用 @PostConstruct 方法和 BeanPostProcessor</li>
+ * </ol>
+ * 
+ * <p>数据结构说明：</p>
+ * <ul>
+ *   <li><strong>beanDefinitionMap</strong>：存储 Bean 的元数据定义，key 为 Bean 名称</li>
+ *   <li><strong>ioc</strong>：存储已实例化的单例 Bean，实现缓存机制</li>
+ *   <li><strong>loadingIoc</strong>：临时存储正在创建中的 Bean，解决循环依赖问题</li>
+ *   <li><strong>beanPostProcessors</strong>：存储所有 Bean 后置处理器实例</li>
+ * </ul>
+ * 
+ * <p>异常处理：</p>
+ * <ul>
+ *   <li>循环依赖检测：通过 loadingIoc 避免无限递归创建</li>
+ *   <li>重复 Bean 名称检测：确保每个 Bean 名称唯一</li>
+ *   <li>反射异常处理：包装并抛出运行时异常</li>
+ * </ul>
+ * 
  * @author gangtann@126.com
  * @version 1.0
  * @since 2025-06-29
+ * @see BeanDefinition
+ * @see BeanPostProcessor
+ * @see Component
+ * @see Autowired
  */
 public class ApplicationContext {
 
@@ -129,7 +163,7 @@ public class ApplicationContext {
     public void initContext(String packageName) throws Exception {
         // 1. 扫描包并生成 BeanDefinition
         scanPackage(packageName).stream()
-                .filter(this::scanCreate)
+                .filter(this::canCreate)
                 .forEach(this::wrapper);
         // 2. 初始化 BeanPostProcessor
         initBeanPostProcessor();
@@ -149,11 +183,11 @@ public class ApplicationContext {
     }
 
     /**
-     * 递归扫描指定包下的所有类
+     * 递归扫描指定包下的所有类 - 实现类路径扫描的核心机制
      *
-     * @param packageName 基础包路径
-     * @return Class 列表
-     * @throws Exception IO 或 Class loading 异常
+     * @param packageName 基础包路径（如：com.gtan.spring）
+     * @return 扫描到的所有类的 Class 对象列表
+     * @throws Exception 文件系统访问异常或类加载异常
      */
     public List<Class<?>> scanPackage(String packageName) throws Exception {
         List<Class<?>> classList = new ArrayList<>();
@@ -187,7 +221,7 @@ public class ApplicationContext {
      * @param type 要检查的 Class
      * @return 如果标注 Component 则返回 true
      */
-    protected boolean scanCreate(Class<?> type) {
+    protected boolean canCreate(Class<?> type) {
         return type.isAnnotationPresent(Component.class);
     }
 

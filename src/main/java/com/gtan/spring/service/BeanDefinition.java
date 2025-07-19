@@ -11,15 +11,46 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * BeanDefinition：描述一个 Bean 的元数据信息，包括类型、实例化构造器、
- * 依赖注入字段列表及生命周期回调方法。
- * <p>
- * 该类在扫描到带 @Component 注解的类时生成，用于 IoC 容器管理。
- * </p>
- *
+ * BeanDefinition - Bean 元数据定义的核心数据结构
+ * 
+ * <p>底层原理说明：</p>
+ * <p>BeanDefinition 是 Spring IoC 容器的核心数据结构，它封装了创建和管理 Bean 所需的所有元数据信息：</p>
+ * 
+ * <ul>
+ *   <li><strong>Bean 类型信息</strong>：存储 Bean 的 Class 对象，用于反射实例化</li>
+ *   <li><strong>Bean 名称</strong>：唯一标识符，用于容器中的 Bean 查找</li>
+ *   <li><strong>实例化策略</strong>：存储无参构造函数，支持反射创建实例</li>
+ *   <li><strong>依赖注入点</strong>：收集所有 @Autowired 字段，实现自动装配</li>
+ *   <li><strong>生命周期回调</strong>：存储 @PostConstruct 方法，支持初始化回调</li>
+ * </ul>
+ * 
+ * <p>构建过程：</p>
+ * <ol>
+ *   <li>通过反射提取 @Component 注解的 name 属性作为 Bean 名称</li>
+ *   <li>获取无参构造函数用于实例化（要求必须有 public 无参构造）</li>
+ *   <li>扫描所有字段收集 @Autowired 注解的依赖注入点</li>
+ *   <li>扫描所有方法收集 @PostConstruct 生命周期回调方法</li>
+ * </ol>
+ * 
+ * <p>异常处理：</p>
+ * <ul>
+ *   <li>缺少无参构造函数时抛出 RuntimeException</li>
+ *   <li>确保 Bean 可以被反射实例化</li>
+ * </ul>
+ * 
+ * <p>设计模式：</p>
+ * <ul>
+ *   <li>不可变对象：所有字段使用 final 修饰，确保线程安全</li>
+ *   <li>建造者模式：通过构造函数一次性收集所有元数据</li>
+ * </ul>
+ * 
  * @author gangtann@126.com
  * @version 1.0
  * @since 2025-06-29
+ * @see ApplicationContext
+ * @see Component
+ * @see Autowired
+ * @see PostConstruct
  */
 public class BeanDefinition {
 
